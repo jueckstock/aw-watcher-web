@@ -1,10 +1,14 @@
 "use strict";
 
 function renderStatus() {
-  chrome.storage.local.get(["lastSync", "lastSyncSuccess", "testing", "baseURL", "enabled"], function(obj) {
+  chrome.storage.local.get(["lastSync", "lastSyncSuccess", "testing", "baseURL", "enabled", "browserName"], function(obj) {
     // Enabled checkbox
     let enabledCheckbox = document.getElementById('status-enabled-checkbox');
     enabledCheckbox.checked = obj.enabled;
+
+    // Browser name override field
+    let browserNameTextbox = document.getElementById('browser-name-textbox');
+    browserNameTextbox.value = (obj.browserName !== undefined) ? obj.browserName : "";
 
     // Consent Button
     let showConsentBtn = document.getElementById('status-consent-btn');
@@ -48,6 +52,12 @@ function domListeners() {
     let enabled = obj.srcElement.checked;
     chrome.runtime.sendMessage({enabled: enabled}, function(response) {});
   });
+  let browser_name_textbox = document.getElementById('browser-name-textbox');
+  let browser_name_button = document.getElementById('browser-name-override-btn');
+  browser_name_button.addEventListener("click", (obj) => {
+    let name_override = browser_name_textbox.value;
+    chrome.runtime.sendMessage({browserName: name_override}, function(response) {});
+  })
   let consent_button = document.getElementById('status-consent-btn');
   consent_button.addEventListener('click', () => {
     const url = chrome.runtime.getURL("../static/consent.html");

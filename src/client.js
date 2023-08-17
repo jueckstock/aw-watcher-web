@@ -22,10 +22,23 @@ function logHttpError(error) {
   }
 }
 
-function getBrowserName() {
+async function getBrowserName() {
+  var browserName;
+
+  // Start by getting the user-overridden name from local storage (if any)
+  var obj = await new Promise((cb) => {
+    chrome.storage.local.get("browserName", cb);
+  });
+  
+  if (obj.browserName !== undefined) {
+      // use the user's specified override as-is
+      browserName = obj.browserName;
+  } else {
   // Get browser name from UAParser (somewhat expensive operation)
   var agent_parsed = ua_parser(navigator.userAgent);
   var browserName = agent_parsed.browser.name.toLowerCase();
+  }
+  
   return browserName;
 }
 
@@ -35,11 +48,11 @@ var client = {
   lastSyncSuccess: true,
   browserName: null,
 
-  setup: function() {
+  setup: async function() {
     console.log("Setting up client");
-    client.browserName = getBrowserName();
+    client.browserName = await getBrowserName();
     // Check if in dev mode
-    chrome.management.getSelf(function(info) {
+    chrome.management.getSelf(async function(info) {
       client.testing = info.installType === "development";
       console.log("testing: " + client.testing);
 
@@ -47,7 +60,7 @@ var client = {
       client.createBucket();
 
       // Needed in order to show testing information in popup
-      chrome.storage.local.set({"testing": client.testing, "baseURL": client.awc.baseURL});
+      await chrome.storage.local.set({"testing": client.testing, "baseURL": client.awc.baseURL});
     });
   },
 

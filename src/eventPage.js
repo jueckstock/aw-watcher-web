@@ -133,9 +133,9 @@ function stopTabChangeListener() {
 
 function startWatcher() {
   console.log("Starting watcher");
-  client.setup();
-  startAlarmListener();
-  startTabChangeListener();
+  (client.setup()
+    .then(startAlarmListener)
+    .then(startTabChangeListener));
 }
 
 function stopWatcher() {
@@ -156,6 +156,18 @@ function popupRequestReceived(msg) {
     } else {
       stopWatcher();
     }
+  }
+  if (msg.browserName !== undefined) {
+    chrome.storage.local.set({ browserName: msg.browserName });
+
+    // hack to make sure a browserName change triggers a watcher-restart, but only if
+    // watching is enabled in the first place
+    chrome.storage.local.get("enabled", function(obj) {
+      if (obj.enabled) {
+        stopWatcher();
+        startWatcher();
+      }
+    });
   }
 }
 
